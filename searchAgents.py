@@ -295,15 +295,29 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #add corners into corners_set (a copy)
+        corners_set = set()
+        for corner in self.corners:
+            corners_set.add(corner)
+        #check whether the starting position is one of the corners or not         
+        if self.startingPosition in self.corners: 
+            corners_set.remove(self.startingPosition) 
+        corners_tuple = tuple(corners_set)
+        #state includes current position and a tuple listing all the corners that haven't yet been visited  
+        return (self.startingPosition, corners_tuple)   
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        #get a copy of next state to check whether if its cost is (goal = 0) or not.
+        #return True if the cost of goalState is 0, otherwise return Flase   
+        corners_tuple = state[1]
+        if len(corners_tuple) == 0:
+            return True
+        return False
+        
     def getSuccessors(self, state):
         """
         Returns successor states, the actions they require, and a cost of 1.
@@ -314,7 +328,6 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
@@ -325,10 +338,25 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
-
+            #initilize local variable cost in order to keep track levels
+            cost = 1
+            x, y = state[0]
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+            if not hitsWall:
+                #forming the position of the successor
+                nextState = (nextx, nexty)  
+                corners_tuple = state[1]
+                cornersSet = set(corners_tuple)
+                #remove the corner from the state tuple in case the new state is an unvisited corner.
+                if nextState in self.corners and nextState in cornersSet:  
+                    cornersSet.remove(nextState)
+                #add to the successors list
+                successors.append(((nextState, tuple(cornersSet)), action, cost))  
         self._expanded += 1 # DO NOT CHANGE
         return successors
-
+        
     def getCostOfActions(self, actions):
         """
         Returns the cost of a particular sequence of actions.  If those actions
@@ -341,7 +369,6 @@ class CornersProblem(search.SearchProblem):
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
         return len(actions)
-
 
 def cornersHeuristic(state, problem):
     """
@@ -360,8 +387,7 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
-
+    
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
